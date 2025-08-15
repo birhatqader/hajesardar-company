@@ -579,6 +579,40 @@ margin-left: -65px;
       
     }
 
+    .modal-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+
+.modal-nav-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.modal-prev-btn {
+    left: 20px;
+}
+
+.modal-next-btn {
+    right: 20px;
+}
+
+.modal-content {
+    position: relative;
+}
 
 
 
@@ -614,16 +648,16 @@ margin-left: -65px;
         
         <div class="categories">
             <button class="category-btn active" data-category="electronics">
-               <i class="fas fa-blender"></i> Kavanozlar ve Mikrodalga
+                <i class="fas fa-laptop"></i> Kavanozlar ve Mikrodalga
             </button>
             <button class="category-btn" data-category="clothing">
-                <i class="fas fa-glass-martini"></i> Bardak
+                <i class="fas fa-tshirt"></i> Gözlük
             </button>
             <button class="category-btn" data-category="home">
                 <i class="fas fa-home"></i> Tepsiler ve Ev Eşyaları
             </button>
             <button class="category-btn" data-category="sports">
-                <i class="fas fa-broom"></i> Su Isıtıcısı ve Vakum
+                <i class="fas fa-football-ball"></i> Su Isıtıcısı ve Vakum
             </button>
         </div>
         
@@ -746,14 +780,14 @@ margin-left: -65px;
             
             </div>
             <p class="copyright">&copy; <span id="current-year">2025</span>  <a href="https://www.instagram.com/jk_developer.it?igsh=NzUyNzdzNWo5Y2F0" target="_blank"><span class="fotername">JK_developer.it</span></a> All rights reserved. </p>
-            <p class="developer">Developed by <a href="https://www.instagram.com/jk_developer.it?igsh=NzUyNzdzNWo5Y2F0" target="_blank"><span class="fotername">JK_developer.it</span> </a></p>
+            <p class="developer">Developed by <a href="https://www.instagram.com/jk_developer.it?igsh=NzUyNzdzNWo5Y2F0" target="_blank"><span class="fotername">Nihat Qader</span> </a></p>
         </div>
         </div>
     </footer>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Product data
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Product data
             const products = {
                 electronics: [
                     {
@@ -897,228 +931,256 @@ margin-left: -65px;
                 ]
             };
 
-
-             // Current year for copyright
+        // Current year for copyright
         document.getElementById('current-year').textContent = new Date().getFullYear();
 
-            // Current image indices for each product
-            const currentImageIndices = {};
+        // Current image indices for each product
+        const currentImageIndices = {};
+        Object.keys(products).forEach(category => {
+            products[category].forEach(product => {
+                currentImageIndices[product.id] = 0;
+            });
+        });
+
+        // DOM elements
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        const galleryContainers = document.querySelectorAll('.gallery-container');
+        const closeGalleryBtns = document.querySelectorAll('.close-gallery');
+        const modal = document.getElementById('imageModal');
+        const modalContent = document.querySelector('.modal-content');
+        const modalImage = document.getElementById('modalImage');
+        const modalName = document.getElementById('modalName');
+        const modalClose = document.querySelector('.modal-close');
+
+        // Create modal navigation arrows
+        const modalPrevBtn = document.createElement('button');
+        modalPrevBtn.className = 'modal-nav-btn modal-prev-btn';
+        modalPrevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        
+        const modalNextBtn = document.createElement('button');
+        modalNextBtn.className = 'modal-nav-btn modal-next-btn';
+        modalNextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        
+        modalContent.appendChild(modalPrevBtn);
+        modalContent.appendChild(modalNextBtn);
+
+        // Initialize galleries
+        function initializeGalleries() {
             Object.keys(products).forEach(category => {
+                const container = document.getElementById(`${category}-products`);
+                container.innerHTML = '';
+                
                 products[category].forEach(product => {
-                    currentImageIndices[product.id] = 0;
+                    const productCard = document.createElement('div');
+                    productCard.className = 'product-card';
+                    productCard.innerHTML = `
+                        <div class="product-image-container">
+                            <img src="${product.images[0]}" alt="${product.name}" class="product-image" data-product-id="${product.id}">
+                            <div class="image-nav">
+                                <button class="nav-btn prev-btn" data-product-id="${product.id}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="nav-btn next-btn" data-product-id="${product.id}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">${product.name}</h3>
+                            <br>
+                        </div>
+                    `;
+                    container.appendChild(productCard);
+                });
+            });
+        }
+
+        // Show gallery for a specific category
+        function showGallery(category) {
+            // Hide all galleries
+            galleryContainers.forEach(container => {
+                container.classList.remove('active');
+            });
+            
+            // Show selected gallery
+            const gallery = document.getElementById(`${category}-gallery`);
+            if (gallery) {
+                gallery.classList.add('active');
+            }
+            
+            // Update active category button
+            categoryBtns.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-category') === category) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // Show modal with product image and name
+        function showModal(productId) {
+            // Find the product
+            let product;
+            Object.keys(products).some(category => {
+                return products[category].some(p => {
+                    if (p.id === productId) {
+                        product = p;
+                        return true;
+                    }
+                    return false;
                 });
             });
 
-            // DOM elements
-            const categoryBtns = document.querySelectorAll('.category-btn');
-            const galleryContainers = document.querySelectorAll('.gallery-container');
-            const closeGalleryBtns = document.querySelectorAll('.close-gallery');
-            const modal = document.getElementById('imageModal');
-            const modalImage = document.getElementById('modalImage');
-            const modalName = document.getElementById('modalName');
-            const modalClose = document.querySelector('.modal-close');
+            if (!product) return;
 
-            // Initialize galleries
-            function initializeGalleries() {
-                Object.keys(products).forEach(category => {
-                    const container = document.getElementById(`${category}-products`);
-                    container.innerHTML = '';
-                    
-                    products[category].forEach(product => {
-                        const productCard = document.createElement('div');
-                        productCard.className = 'product-card';
-                        productCard.innerHTML = `
-                            <div class="product-image-container">
-                                <img src="${product.images[0]}" alt="${product.name}" class="product-image" data-product-id="${product.id}">
-                                <div class="image-nav">
-                                    <button class="nav-btn prev-btn" data-product-id="${product.id}">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </button>
-                                    <button class="nav-btn next-btn" data-product-id="${product.id}">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="product-info">
-                                <h3 class="product-name">${product.name}</h3>
-                                <br>
-                               
-                               
-                            </div>
-                        `;
-                        container.appendChild(productCard);
-                    });
+            // Set modal content
+            modalImage.src = product.images[currentImageIndices[productId]];
+            modalImage.setAttribute('data-current-product', productId);
+            modalName.textContent = product.name;
+
+            // Show modal
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close modal
+        function closeModal() {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Navigate product images
+        function navigateImage(productId, direction) {
+            // Find the product
+            let product;
+            Object.keys(products).some(category => {
+                return products[category].some(p => {
+                    if (p.id === productId) {
+                        product = p;
+                        return true;
+                    }
+                    return false;
                 });
+            });
+
+            if (!product) return;
+
+            // Update current image index
+            currentImageIndices[productId] += direction;
+            
+            // Wrap around if needed
+            if (currentImageIndices[productId] < 0) {
+                currentImageIndices[productId] = product.images.length - 1;
+            } else if (currentImageIndices[productId] >= product.images.length) {
+                currentImageIndices[productId] = 0;
             }
 
-            // Show gallery for a specific category
-            function showGallery(category) {
-                // Hide all galleries
+            // Update the image
+            const imgElement = document.querySelector(`.product-image[data-product-id="${productId}"]`);
+            if (imgElement) {
+                imgElement.src = product.images[currentImageIndices[productId]];
+            }
+
+            // If modal is open, update its image too
+            if (modal.style.display === 'flex') {
+                modalImage.src = product.images[currentImageIndices[productId]];
+            }
+        }
+
+        // Event listeners
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                showGallery(category);
+            });
+        });
+
+        closeGalleryBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
                 galleryContainers.forEach(container => {
                     container.classList.remove('active');
                 });
-                
-                // Show selected gallery
-                const gallery = document.getElementById(`${category}-gallery`);
-                if (gallery) {
-                    gallery.classList.add('active');
-                }
-                
-                // Update active category button
-                categoryBtns.forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.getAttribute('data-category') === category) {
-                        btn.classList.add('active');
-                    }
-                });
-            }
-
-            // Show modal with product image and name
-            function showModal(productId) {
-                // Find the product
-                let product;
-                Object.keys(products).some(category => {
-                    return products[category].some(p => {
-                        if (p.id === productId) {
-                            product = p;
-                            return true;
-                        }
-                        return false;
-                    });
-                });
-
-                if (!product) return;
-
-                // Set modal content
-                modalImage.src = product.images[currentImageIndices[productId]];
-                modalName.textContent = product.name;
-
-                // Show modal
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            }
-
-            // Close modal
-            function closeModal() {
-                modal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }
-
-            // Navigate product images
-            function navigateImage(productId, direction) {
-                // Find the product
-                let product;
-                Object.keys(products).some(category => {
-                    return products[category].some(p => {
-                        if (p.id === productId) {
-                            product = p;
-                            return true;
-                        }
-                        return false;
-                    });
-                });
-
-                if (!product) return;
-
-                // Update current image index
-                currentImageIndices[productId] += direction;
-                
-                // Wrap around if needed
-                if (currentImageIndices[productId] < 0) {
-                    currentImageIndices[productId] = product.images.length - 1;
-                } else if (currentImageIndices[productId] >= product.images.length) {
-                    currentImageIndices[productId] = 0;
-                }
-
-                // Update the image
-                const imgElement = document.querySelector(`.product-image[data-product-id="${productId}"]`);
-                if (imgElement) {
-                    imgElement.src = product.images[currentImageIndices[productId]];
-                }
-
-                // If modal is open, update its image too
-                if (modal.style.display === 'flex') {
-                    modalImage.src = product.images[currentImageIndices[productId]];
-                }
-            }
-
-            // Event listeners
-            categoryBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const category = this.getAttribute('data-category');
-                    showGallery(category);
-                });
+                categoryBtns.forEach(btn => btn.classList.remove('active'));
             });
-
-            closeGalleryBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    galleryContainers.forEach(container => {
-                        container.classList.remove('active');
-                    });
-                    categoryBtns.forEach(btn => btn.classList.remove('active'));
-                });
-            });
-
-            // Close modal when clicking the close button
-            modalClose.addEventListener('click', closeModal);
-
-            // Close modal when clicking outside the modal content
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    closeModal();
-                }
-            });
-
-            // Delegated event listeners for image navigation and add to cart
-            document.addEventListener('click', function(e) {
-                // Product image click
-                if (e.target.classList.contains('product-image') || e.target.closest('.product-image-container')) {
-                    const img = e.target.classList.contains('product-image') ? e.target : e.target.closest('.product-image-container').querySelector('.product-image');
-                    const productId = parseInt(img.getAttribute('data-product-id'));
-                    showModal(productId);
-                }
-                
-                // Previous image button
-                if (e.target.classList.contains('prev-btn') || e.target.closest('.prev-btn')) {
-                    const btn = e.target.classList.contains('prev-btn') ? e.target : e.target.closest('.prev-btn');
-                    const productId = parseInt(btn.getAttribute('data-product-id'));
-                    navigateImage(productId, -1);
-                }
-                
-                // Next image button
-                if (e.target.classList.contains('next-btn') || e.target.closest('.next-btn')) {
-                    const btn = e.target.classList.contains('next-btn') ? e.target : e.target.closest('.next-btn');
-                    const productId = parseInt(btn.getAttribute('data-product-id'));
-                    navigateImage(productId, 1);
-                }
-                
-                // Add to cart button
-                if (e.target.classList.contains('add-to-cart') || e.target.closest('.add-to-cart')) {
-                    const btn = e.target.classList.contains('add-to-cart') ? e.target : e.target.closest('.add-to-cart');
-                    const productId = parseInt(btn.getAttribute('data-product-id'));
-                    
-                    // Find the product
-                    let product;
-                    Object.keys(products).some(category => {
-                        return products[category].some(p => {
-                            if (p.id === productId) {
-                                product = p;
-                                return true;
-                            }
-                            return false;
-                        });
-                    });
-
-                    if (product) {
-                        alert(`${product.name} added to cart!`);
-                    }
-                }
-            });
-
-            // Initialize
-            initializeGalleries();
-            showGallery('electronics');
         });
-    </script>
+
+        // Close modal when clicking the close button
+        modalClose.addEventListener('click', closeModal);
+
+        // Close modal when clicking outside the modal content
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Modal navigation buttons
+        modalPrevBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const productId = parseInt(modalImage.getAttribute('data-current-product'));
+            if (productId) {
+                navigateImage(productId, -1);
+            }
+        });
+
+        modalNextBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const productId = parseInt(modalImage.getAttribute('data-current-product'));
+            if (productId) {
+                navigateImage(productId, 1);
+            }
+        });
+
+        // Delegated event listeners for image navigation and add to cart
+        document.addEventListener('click', function(e) {
+            // Product image click
+            if (e.target.classList.contains('product-image') || e.target.closest('.product-image-container')) {
+                const img = e.target.classList.contains('product-image') ? e.target : e.target.closest('.product-image-container').querySelector('.product-image');
+                const productId = parseInt(img.getAttribute('data-product-id'));
+                showModal(productId);
+            }
+            
+            // Previous image button
+            if (e.target.classList.contains('prev-btn') || e.target.closest('.prev-btn')) {
+                const btn = e.target.classList.contains('prev-btn') ? e.target : e.target.closest('.prev-btn');
+                const productId = parseInt(btn.getAttribute('data-product-id'));
+                navigateImage(productId, -1);
+            }
+            
+            // Next image button
+            if (e.target.classList.contains('next-btn') || e.target.closest('.next-btn')) {
+                const btn = e.target.classList.contains('next-btn') ? e.target : e.target.closest('.next-btn');
+                const productId = parseInt(btn.getAttribute('data-product-id'));
+                navigateImage(productId, 1);
+            }
+            
+            // Add to cart button
+            if (e.target.classList.contains('add-to-cart') || e.target.closest('.add-to-cart')) {
+                const btn = e.target.classList.contains('add-to-cart') ? e.target : e.target.closest('.add-to-cart');
+                const productId = parseInt(btn.getAttribute('data-product-id'));
+                
+                // Find the product
+                let product;
+                Object.keys(products).some(category => {
+                    return products[category].some(p => {
+                        if (p.id === productId) {
+                            product = p;
+                            return true;
+                        }
+                        return false;
+                    });
+                });
+
+                if (product) {
+                    alert(`${product.name} added to cart!`);
+                }
+            }
+        });
+
+        // Initialize
+        initializeGalleries();
+        showGallery('electronics');
+    });
+</script>
 </body>
 </html>

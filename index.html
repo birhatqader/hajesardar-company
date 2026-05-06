@@ -682,17 +682,21 @@ margin-left: -65px;
         <h1>Shop by Category</h1>
         
         <div class="categories">
+            <!-- Category 1: Jars & Microwave (original icon stays) -->
             <button class="category-btn active" data-category="electronics">
                 <i class="fas fa-laptop"></i> Jars & Microwave
             </button>
+            <!-- Category 2: changed to Glass/Cup icon -->
             <button class="category-btn" data-category="clothing">
-                <i class="fas fa-tshirt"></i> Glasses
+                <i class="fas fa-wine-glass-alt"></i> Glasses
             </button>
+            <!-- Category 3: changed to Tray icon -->
             <button class="category-btn" data-category="home">
-                <i class="fas fa-home"></i> Trayers & HouseHold
+                <i class="fas fa-utensils"></i> Trayers & HouseHold
             </button>
+            <!-- Category 4: changed to Kettle/Vacuum icon (kettle & vacuum hybrid style) -->
             <button class="category-btn" data-category="sports">
-                <i class="fas fa-football-ball"></i> Kettle & Vacuum
+                <i class="fas fa-mug-hot"></i> Kettle & Vacuum
             </button>
         </div>
         
@@ -822,7 +826,7 @@ margin-left: -65px;
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Product data
+        // Product data (unchanged, same as provided)
         const products = {
             electronics: [
                 {
